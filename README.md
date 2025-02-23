@@ -1,3 +1,3 @@
-# Drone Chase with RL
+# Drone Chase with Stable Baselines3
 
 This project adapts the [Aerial Navigation Code](https://github.com/AtsushiSakai/PythonRobotics/tree/master/AerialNavigation/drone_3d_trajectory_following) by Daniel Ingram (daniel-s-ingram) from [PythonRobotics](atsushisakai.github.io/PythonRobotics/) to create a simple 3D envrionment with two quadrotors. One quadrotor (Target) is controlled by the user with keyboard controls, and the other (Chaser) is trained with [Stable Baselines3 (SB3)](https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html)'s PPO algorithm. The goal is for the user to not get caught by the Chaser.  
