@@ -136,6 +136,7 @@ class Multiple_Quad():
         plt.xlim(0,10)
         plt.ylim(0,10)
         self.ax.set_zlim(0,10)
+        plt.pause(0.001)
 
     
         # # --- SWITCH VIEWPOINT BASED ON QUADROTOR POSITIONS ---
@@ -152,8 +153,7 @@ class Multiple_Quad():
         # else:
         #     # Side view along y-axis
         #     self.ax.view_init(elev=20, azim=90)
-            
-            plt.pause(0.001)
+
             
 
     

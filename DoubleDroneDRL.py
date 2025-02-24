@@ -20,8 +20,8 @@ def train_sb3():
     modelPPO.set_env(env)
 
     TIMESTEPS = 10000
-    iter = 41
-    while iter <= 100:
+    iter = 67
+    while iter <= 200:
         tb_log_name=f'model_iter_{iter}'
         modelPPO.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, progress_bar=True, tb_log_name=tb_log_name)
         modelPPO.save(f"{model_dir}/ppo{TIMESTEPS * iter}")
@@ -43,7 +43,7 @@ def test_sb3():
     env.close()
 
 if __name__=="__main__":
-    test_sb3()
+    train_sb3()
     
 
 # episodes = 10

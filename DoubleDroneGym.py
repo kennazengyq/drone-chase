@@ -7,6 +7,7 @@ from Multiple_Quad import Multiple_Quad
 from gymnasium import Env, spaces
 from math import cos, sin
 from stable_baselines3.common.logger import Logger, configure
+from stable_baselines3 import PPO
 
 font = cv2.FONT_HERSHEY_COMPLEX_SMALL
 
@@ -53,7 +54,7 @@ class DoubleDroneGym(Env):
 
         self.quad = Multiple_Quad(a_x=self.a_x, a_y=self.a_y, a_z=self.a_z, b_x=self.b_x, b_y=self.b_y, b_z=self.b_z,roll=self.roll, pitch = self.pitch, yaw=self.yaw,show_animation=True)
 
-        # thrust range: [0.8, 2], yaw/pitch/roll range: [-1,1]
+        # thrust range: [0.8,1.52], yaw/pitch/roll range: [-1,1]
         self.action_space = spaces.Box(low=np.array([0.8, -1, -1, -1]), high=np.array([1.5, 1, 1, 1]), dtype=np.float32)
 
         self.state_reward = self.calc_reward()
@@ -235,35 +236,60 @@ class DoubleDroneGym(Env):
 
 
     def b_step(self):
-        # # Make B randomly move
-        # amplitude = 2  # Controls how far B moves
-        # frequency = 0.5  # Adjust frequency for speed of oscillation
+        # Calculate the direction vector from Drone A to Drone B
+        rel_x = self.b_x - self.a_x
+        rel_y = self.b_y - self.a_y
+        rel_z = self.b_z - self.a_z
 
-        # noise = np.random.uniform(-0.05, 0.05, 3)  # Small random noise
-        # self.b_x = np.clip(5 + amplitude * np.sin(frequency * self.t) + noise[0], 0, 10)
-        # self.b_y = np.clip(5 + amplitude * np.cos(frequency * self.t) + noise[1], 0, 10)
-        # self.b_z = np.clip(5 + (amplitude / 2) * np.sin(frequency * self.t / 2) + noise[2], 0, 10)
+        # Compute the distance between Drone A and Drone B
+        distance = np.sqrt(rel_x**2 + rel_y**2 + rel_z**2)
 
-        # # Keep B inside boundaries (0 to 10)
-        # self.b_x = np.clip(self.b_x, 0, 10)
-        # self.b_y = np.clip(self.b_y, 0, 10)
-        # self.b_z = np.clip(self.b_z, 0, 10)
+        # If the distance is below a threshold, Drone B will move away from Drone A
+        move_away_factor = 0.5  # Factor by which Drone B moves away from Drone A
 
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_w]:  
-            self.b_y = min(10, self.b_y + 0.15)
-        elif keys[pygame.K_s]:
-            self.b_y = max(0, self.b_y - 0.15)
+        if distance < 3:  # Threshold distance to start moving away (tune this value)
+            # Move away by a factor proportional to the inverse of the distance
+            if min(rel_x, rel_y, rel_z) == rel_x:
+                move_x = rel_x / (distance + 1e-6) * move_away_factor
+                self.b_x = np.clip(self.b_x + move_x, 0, 10)
+            elif min(rel_x, rel_y, rel_z) == rel_y:
+                move_y = rel_y / (distance + 1e-6) * move_away_factor
+                self.b_y = np.clip(self.b_y + move_y, 0, 10)
+            else:
+                move_z = rel_z / (distance + 1e-6) * move_away_factor
+                self.b_z = np.clip(self.b_z + move_z, 0, 10)
+
+        else:
+            # Move randomly when not too close
+            amplitude = 2.0  # Increased amplitude for a larger range of movement
+            frequency = 0.5  # Faster oscillation frequency for quicker movement
+
+            # Add smooth oscillatory movement in x, y, z directions
+            self.b_x = np.clip(5 + amplitude * np.sin(frequency * self.t), 0, 10)
+            self.b_y = np.clip(5 + amplitude * np.cos(frequency * self.t), 0, 10)
+            self.b_z = np.clip(5 + amplitude * np.sin(frequency * self.t / 2), 0, 10)
+
+            
+        self.t += self.dt
+
         
-        if keys[pygame.K_d]:
-            self.b_x = min(10, self.b_x + 0.15)
-        elif keys[pygame.K_a]:
-            self.b_x = max(0, self.b_x - 0.15)
 
-        if keys[pygame.K_UP]:
-            self.b_z = min(10, self.b_z + 0.15)
-        elif keys[pygame.K_DOWN]:
-            self.b_z = max(0, self.b_z - 0.15)
+
+        # keys = pygame.key.get_pressed()
+        # if keys[pygame.K_w]:  
+        #     self.b_y = min(10, self.b_y + 0.15)
+        # elif keys[pygame.K_s]:
+        #     self.b_y = max(0, self.b_y - 0.15)
+        
+        # if keys[pygame.K_d]:
+        #     self.b_x = min(10, self.b_x + 0.15)
+        # elif keys[pygame.K_a]:
+        #     self.b_x = max(0, self.b_x - 0.15)
+
+        # if keys[pygame.K_UP]:
+        #     self.b_z = min(10, self.b_z + 0.15)
+        # elif keys[pygame.K_DOWN]:
+        #     self.b_z = max(0, self.b_z - 0.15)
 
     def game_over(self):
         rel_x = self.a_x - self.b_x
@@ -313,13 +339,13 @@ class DoubleDroneGym(Env):
     
 
 # env = DoubleDroneGym()
-# obs = env.reset()
+# obs = env.reset()[0]
+# model = PPO.load('ppo660000.zip')
 # while True:
 #     # Take a random action
-#     currStep = env.action_space.sample()
-#     obs, reward, done, truncated, info = env.step(currStep)
+#     currStep = model.predict(observation=obs, deterministic=True)[0]
+#     obs, reward, done, _, _ = env.step(currStep)
 
-    
 
 #     # Render the game
 #     env.render('human')
