@@ -172,36 +172,7 @@ class DoubleDroneGym(Env):
         done = False
         assert self.action_space.contains(action), "invalid action"
 
-        
-        # # Make B randomly move
-        # amplitude = 2  # Controls how far B moves
-        # frequency = 0.5  # Adjust frequency for speed of oscillation
-
-        # noise = np.random.uniform(-0.05, 0.05, 3)  # Small random noise
-        # self.b_x = np.clip(5 + amplitude * np.sin(frequency * self.t) + noise[0], 0, 10)
-        # self.b_y = np.clip(5 + amplitude * np.cos(frequency * self.t) + noise[1], 0, 10)
-        # self.b_z = np.clip(5 + (amplitude / 2) * np.sin(frequency * self.t / 2) + noise[2], 0, 10)
-
-        # # Keep B inside boundaries (0 to 10)
-        # self.b_x = np.clip(self.b_x, 0, 10)
-        # self.b_y = np.clip(self.b_y, 0, 10)
-        # self.b_z = np.clip(self.b_z, 0, 10)
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_UP]:  
-            self.b_y += 0.1
-        elif keys[pygame.K_DOWN]:
-            self.b_y -= 0.1
-        
-        if keys[pygame.K_RIGHT]:
-            self.b_x += 0.1
-        elif keys[pygame.K_LEFT]:
-            self.b_x -= 0.1
-
-        if keys[pygame.K_w]:
-            self.b_z += 0.1
-        elif keys[pygame.K_x]:
-            self.b_z -= 0.1
+        self.b_step()
 
 
         thrust_factor = action[0]
@@ -263,6 +234,38 @@ class DoubleDroneGym(Env):
         return self.state, self.state_reward, done, False, {}
 
 
+    def b_step(self):
+        # # Make B randomly move
+        # amplitude = 2  # Controls how far B moves
+        # frequency = 0.5  # Adjust frequency for speed of oscillation
+
+        # noise = np.random.uniform(-0.05, 0.05, 3)  # Small random noise
+        # self.b_x = np.clip(5 + amplitude * np.sin(frequency * self.t) + noise[0], 0, 10)
+        # self.b_y = np.clip(5 + amplitude * np.cos(frequency * self.t) + noise[1], 0, 10)
+        # self.b_z = np.clip(5 + (amplitude / 2) * np.sin(frequency * self.t / 2) + noise[2], 0, 10)
+
+        # # Keep B inside boundaries (0 to 10)
+        # self.b_x = np.clip(self.b_x, 0, 10)
+        # self.b_y = np.clip(self.b_y, 0, 10)
+        # self.b_z = np.clip(self.b_z, 0, 10)
+
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_w]:  
+            self.b_y = min(10, self.b_y + 0.1)
+        elif keys[pygame.K_s]:
+            self.b_y = max(0, self.b_y - 0.1)
+        
+        if keys[pygame.K_d]:
+            self.b_x = min(10, self.b_x + 0.1)
+        elif keys[pygame.K_a]:
+            self.b_x = max(0, self.b_x - 0.1)
+
+        if keys[pygame.K_UP]:
+            self.b_z = min(10, self.b_z + 0.1)
+        elif keys[pygame.K_DOWN]:
+            self.b_z = max(0, self.b_z - 0.1)
+
+        
 
     def rotation_matrix(self, roll, pitch, yaw):
         """
@@ -303,22 +306,22 @@ class DoubleDroneGym(Env):
         return position, velocity, False
     
 
-# env = DoubleDroneGym()
-# obs = env.reset()
-# while True:
-#     # Take a random action
-#     currStep = env.action_space.sample()
-#     obs, reward, done, truncated, info = env.step(currStep)
+env = DoubleDroneGym()
+obs = env.reset()
+while True:
+    # Take a random action
+    currStep = env.action_space.sample()
+    obs, reward, done, truncated, info = env.step(currStep)
 
     
 
 
 
-#     # Render the game
-#     env.render('human')
+    # Render the game
+    env.render('human')
 
-#     if done == True:
-#         break
+    if done == True:
+        break
 
 
-# env.close()
+env.close()

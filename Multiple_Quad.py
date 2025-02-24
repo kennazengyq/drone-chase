@@ -9,6 +9,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Multiple_Quad():
+
+    def block_s_key(self, event):
+        if event.key == 's': 
+            event.canvas.figure.canvas.manager.toolbar.toggle()  
+            return  # Prevent default behavior of saving
+        
     def __init__(self, a_x=0, a_y=0, a_z=0,b_x=0, b_y=0, b_z=0, roll=0, pitch=0, yaw=0, size=0.25, show_animation=True):
        
         # Quadrotors
@@ -38,6 +44,7 @@ class Multiple_Quad():
             # for stopping simulation with the esc key.
             fig.canvas.mpl_connect('key_release_event',
                     lambda event: [exit(0) if event.key == 'escape' else None])
+            fig.canvas.mpl_connect('key_press_event', self.block_s_key)
 
             self.ax = fig.add_subplot(111, projection='3d')
 
@@ -129,7 +136,7 @@ class Multiple_Quad():
         plt.xlim(0,10)
         plt.ylim(0,10)
         self.ax.set_zlim(0,10)
-
+        
         plt.pause(0.001)
     
     def get_pos_a(self):
@@ -141,4 +148,5 @@ class Multiple_Quad():
         b_pos = np.array([self.b_x, self.b_y, self.b_z])
         b = b_pos.astype(int)
         return (b)
+    
     
