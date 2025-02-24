@@ -251,20 +251,26 @@ class DoubleDroneGym(Env):
 
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:  
-            self.b_y = min(10, self.b_y + 0.1)
+            self.b_y = min(10, self.b_y + 0.15)
         elif keys[pygame.K_s]:
-            self.b_y = max(0, self.b_y - 0.1)
+            self.b_y = max(0, self.b_y - 0.15)
         
         if keys[pygame.K_d]:
-            self.b_x = min(10, self.b_x + 0.1)
+            self.b_x = min(10, self.b_x + 0.15)
         elif keys[pygame.K_a]:
-            self.b_x = max(0, self.b_x - 0.1)
+            self.b_x = max(0, self.b_x - 0.15)
 
         if keys[pygame.K_UP]:
-            self.b_z = min(10, self.b_z + 0.1)
+            self.b_z = min(10, self.b_z + 0.15)
         elif keys[pygame.K_DOWN]:
-            self.b_z = max(0, self.b_z - 0.1)
+            self.b_z = max(0, self.b_z - 0.15)
 
+    def game_over(self):
+        rel_x = self.a_x - self.b_x
+        rel_y = self.a_y - self.b_y
+        rel_z = self.a_z - self.b_z
+        distance = np.sqrt(rel_x**2 + rel_y**2 + rel_z**2)
+        return distance < 0.2
         
 
     def rotation_matrix(self, roll, pitch, yaw):
@@ -306,22 +312,20 @@ class DoubleDroneGym(Env):
         return position, velocity, False
     
 
-env = DoubleDroneGym()
-obs = env.reset()
-while True:
-    # Take a random action
-    currStep = env.action_space.sample()
-    obs, reward, done, truncated, info = env.step(currStep)
+# env = DoubleDroneGym()
+# obs = env.reset()
+# while True:
+#     # Take a random action
+#     currStep = env.action_space.sample()
+#     obs, reward, done, truncated, info = env.step(currStep)
 
     
 
+#     # Render the game
+#     env.render('human')
+
+#     if done == True:
+#         break
 
 
-    # Render the game
-    env.render('human')
-
-    if done == True:
-        break
-
-
-env.close()
+# env.close()

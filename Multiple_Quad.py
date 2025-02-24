@@ -62,9 +62,9 @@ class Multiple_Quad():
         self.roll = roll
         self.pitch = pitch
         self.yaw = yaw
-        self.a_x_data.append(a_x)
-        self.a_y_data.append(a_y)
-        self.a_z_data.append(a_z)
+        # self.a_x_data.append(a_x)
+        # self.a_y_data.append(a_y)
+        # self.a_z_data.append(a_z)
 
         if self.show_animation:
             self.plot()
@@ -129,15 +129,33 @@ class Multiple_Quad():
         self.ax.plot([b_p3_t[0], b_p4_t[0]], [b_p3_t[1], b_p4_t[1]],
                      [b_p3_t[2], b_p4_t[2]], 'c-')
 
-        self.ax.plot(self.a_x_data, self.a_y_data, self.a_z_data, 'b:')
+        # self.ax.plot(self.a_x_data, self.a_y_data, self.a_z_data, 'b:')
 
 
 
         plt.xlim(0,10)
         plt.ylim(0,10)
         self.ax.set_zlim(0,10)
-        
-        plt.pause(0.001)
+
+    
+        # # --- SWITCH VIEWPOINT BASED ON QUADROTOR POSITIONS ---
+        # dx = abs(self.b_x - self.a_x)
+        # dy = abs(self.b_y - self.a_y)
+        # dz = abs(self.b_z - self.a_z)
+
+        # if dz > dx and dz > dy:
+        #     # Top-down view
+        #     self.ax.view_init(elev=90, azim=0)
+        # elif dx > dy:
+        #     # Side view along x-axis
+        #     self.ax.view_init(elev=20, azim=0)
+        # else:
+        #     # Side view along y-axis
+        #     self.ax.view_init(elev=20, azim=90)
+            
+            plt.pause(0.001)
+            
+
     
     def get_pos_a(self):
         a_pos = np.array([self.a_x, self.a_y, self.a_z])
