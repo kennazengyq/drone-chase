@@ -16,8 +16,9 @@ import pygame
 pygame.init()
 
 class DoubleDroneGym(Env):
-    def __init__(self):
+    def __init__(self, game=False):
         super(DoubleDroneGym,self).__init__()
+        self.game = game
 
         self.logger = configure("./logs", ["stdout", "csv"])
 
@@ -60,47 +61,87 @@ class DoubleDroneGym(Env):
         self.state_reward = self.calc_reward()
 
         self.draw_elements_on_state()
+        self.b_mode = random.choice([1, 2, 3])  # 1: static, 2: evasive, 3: circular
 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(len(self.state),), dtype=np.float32)
         self.count = 0
+        self.episode_count = 0
 
+
+    # def calc_reward(self):
+    #     # Relative vector and distance
+    #     rel_x = self.a_x - self.b_x
+    #     rel_y = self.a_y - self.b_y
+    #     rel_z = self.a_z - self.b_z
+    #     rel_vector = np.array([rel_x, rel_y, rel_z])
+    #     distance = np.linalg.norm(rel_vector)
+
+    #     # Velocity alignment with chase direction
+    #     velocity_vector = np.array([self.x_vel, self.y_vel, self.z_vel])
+    #     if np.linalg.norm(velocity_vector) > 0:
+    #         approach_bonus = np.dot(velocity_vector, -rel_vector) / (np.linalg.norm(velocity_vector) * distance + 1e-6)
+    #     else:
+    #         approach_bonus = 0
+
+    #     # Orientation stability (optional but helpful)
+    #     orientation_penalty = - (abs(self.roll) + abs(self.pitch)) * 0.1
+
+    #     # Smooth proximity reward (instead of step bonuses)
+    #     proximity_reward = np.exp(-distance * 2.0) * 10  # reward peaks as distance → 0
+    #     if distance < 0.2:
+    #         proximity_reward += 100
+
+    #     # Boundary penalty
+    #     boundary_penalty = 0
+    #     for axis in [self.a_x, self.a_y, self.a_z]:
+    #         if axis < 0.2 or axis > 9.8:
+    #             boundary_penalty -= 2.0
+
+    #     # Energy efficiency (velocity penalty)
+    #     velocity_penalty = 0.1 * np.linalg.norm(velocity_vector)
+
+    #     total_reward = (
+    #         proximity_reward + 
+    #         approach_bonus +
+    #         orientation_penalty +
+    #         boundary_penalty +
+    #         velocity_penalty
+    #     )
+
+    #     return total_reward
 
     def calc_reward(self):
-        # Relative Position
+        # Relative vector and distance
         rel_x = self.a_x - self.b_x
         rel_y = self.a_y - self.b_y
         rel_z = self.a_z - self.b_z
-        distance = np.sqrt(rel_x**2 + rel_y**2 + rel_z**2)
+        rel_vector = np.array([rel_x, rel_y, rel_z])
+        distance = np.linalg.norm(rel_vector)
 
+        # Velocity alignment with chase direction
         velocity_vector = np.array([self.x_vel, self.y_vel, self.z_vel])
-        
-        # Distance Reward (negative reward for being far)
-        distance_penalty = -distance * 0.5  
-
-        # Velocity Control Penalty (avoid high speeds)
-        velocity_penalty = -0.1 * np.linalg.norm(velocity_vector)
-
-        # Bonus for being close to B
-        if distance < 0.5:
-            close_bonus = 10  
+        if np.linalg.norm(velocity_vector) > 0:
+            approach_bonus = np.dot(velocity_vector, -rel_vector) / (np.linalg.norm(velocity_vector) * distance + 1e-6)
         else:
-            close_bonus = 0
+            approach_bonus = 0
 
-        if self.a_z == 0 or self.a_z == 10:
-            distance_penalty += -10
-        if self.a_y == 0 or self.a_y == 10:
-            distance_penalty += -5
-        if self.a_x == 0 or self.a_x == 10:
-            distance_penalty += -5
+        # Proximity reward
+        proximity_reward = np.exp(-distance * 2.0) * 20  # Increase weight for proximity
+        if distance < 0.2:
+            proximity_reward += 100
 
-        rel_pos = np.array([rel_x, rel_y, rel_z])
-        
+        # Remove or reduce velocity penalty
+        velocity_penalty = 0.05 * np.linalg.norm(velocity_vector)  # Reduced penalty
 
-        approach_reward = np.dot(rel_pos, velocity_vector) / (np.linalg.norm(rel_pos) + 1e-6)  
-        reward = distance_penalty + velocity_penalty + close_bonus + approach_reward
+        # Total reward
+        total_reward = (
+            proximity_reward +
+            approach_bonus -
+            velocity_penalty
+        )
 
+        return total_reward
 
-        return reward
 
 
     
@@ -113,6 +154,10 @@ class DoubleDroneGym(Env):
         self.a_x = 5
         self.a_y = 5
         self.a_z = 0
+
+        self.b_x = random.uniform(0,10)
+        self.b_y = random.uniform(0,10)
+        self.b_z = random.uniform(0,10)
 
         self.x_vel = 0
         self.y_vel = 0
@@ -143,7 +188,13 @@ class DoubleDroneGym(Env):
         self.state_reward = self.calc_reward()
 
         self.draw_elements_on_state()
+        self.b_mode = random.choice([1, 2, 3])  # 1: static, 2: evasive, 3: circular
 
+
+        self.episode_count += 1
+        # print("mode", self.b_mode)
+
+        
         return self.state, {}
     
     def render(self, mode='human'):
@@ -173,11 +224,11 @@ class DoubleDroneGym(Env):
         done = False
         assert self.action_space.contains(action), "invalid action"
 
-        self.b_step()
+        self.b_step(game=self.game)
 
 
         thrust_factor = action[0]
-        self.thrust = np.clip(thrust_factor * self.m * self.g, 0.8 * self.m * self.g, 2.5 * self.m * self.g)
+        self.thrust = np.clip(thrust_factor * self.m * self.g, 0.8 * self.m * self.g, 3 * self.m * self.g)
         
         self.roll += action[1] * 0.05  
         self.pitch += action[2] * 0.05  
@@ -225,78 +276,85 @@ class DoubleDroneGym(Env):
         self.state_reward = self.calc_reward()
         if hasattr(self, "logger"):
             self.logger.record("reward", self.state_reward)
-        if self.count % 20 == 0:
-            print(action, self.state_reward)
+
+        distance = np.linalg.norm([self.a_x - self.b_x, self.a_y - self.b_y, self.a_z - self.b_z])
+       
+        # if self.count % 20 == 0:
+        #     print(distance)
+       
         self.count += 1
 
-        # if np.linalg.norm([self.a_x - self.b_x, self.a_y - self.b_y, self.a_z - self.b_z]) < 0.2:
-        #     done = True
+        if self.game:
+            done = distance < 0.2
+        else:
+            done = distance == 0
 
-        return self.state, self.state_reward, done, False, {}
+        return self.state, self.state_reward, done, done, {}
 
 
-    def b_step(self):
-        # Calculate the direction vector from Drone A to Drone B
-        rel_x = self.b_x - self.a_x
-        rel_y = self.b_y - self.a_y
-        rel_z = self.b_z - self.a_z
+    def b_step(self, game=False):
+        if game:
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_w]:  
+                self.b_y = min(10, self.b_y + 0.15)
+            elif keys[pygame.K_x]:
+                self.b_y = max(0, self.b_y - 0.15)
+            
+            if keys[pygame.K_RIGHT]:
+                self.b_x = min(10, self.b_x + 0.15)
+            elif keys[pygame.K_LEFT]:
+                self.b_x = max(0, self.b_x - 0.15)
 
-        # Compute the distance between Drone A and Drone B
-        distance = np.sqrt(rel_x**2 + rel_y**2 + rel_z**2)
-
-        # If the distance is below a threshold, Drone B will move away from Drone A
-        move_away_factor = 0.5  # Factor by which Drone B moves away from Drone A
-
-        if distance < 3:  # Threshold distance to start moving away (tune this value)
-            # Move away by a factor proportional to the inverse of the distance
-            if min(rel_x, rel_y, rel_z) == rel_x:
-                move_x = rel_x / (distance + 1e-6) * move_away_factor
-                self.b_x = np.clip(self.b_x + move_x, 0, 10)
-            elif min(rel_x, rel_y, rel_z) == rel_y:
-                move_y = rel_y / (distance + 1e-6) * move_away_factor
-                self.b_y = np.clip(self.b_y + move_y, 0, 10)
-            else:
-                move_z = rel_z / (distance + 1e-6) * move_away_factor
-                self.b_z = np.clip(self.b_z + move_z, 0, 10)
+            if keys[pygame.K_UP]:
+                self.b_z = min(10, self.b_z + 0.15)
+            elif keys[pygame.K_DOWN]:
+                self.b_z = max(0, self.b_z - 0.15)
 
         else:
-            # Move randomly when not too close
-            amplitude = 2.0  # Increased amplitude for a larger range of movement
-            frequency = 0.5  # Faster oscillation frequency for quicker movement
+            if self.b_mode == 1:
+                # Static - blue drone does not move
+                pass
 
-            # Add smooth oscillatory movement in x, y, z directions
-            self.b_x = np.clip(5 + amplitude * np.sin(frequency * self.t), 0, 10)
-            self.b_y = np.clip(5 + amplitude * np.cos(frequency * self.t), 0, 10)
-            self.b_z = np.clip(5 + amplitude * np.sin(frequency * self.t / 2), 0, 10)
+            elif self.b_mode == 2:
+                # Evasive - move away from red drone
+                direction = np.array([self.b_x - self.a_x, self.b_y - self.a_y, self.b_z - self.a_z])
+                norm = np.linalg.norm(direction)
+                if norm > 0:
+                    direction /= norm
+                    speed = 0.2
+                    self.b_x += direction[0] * speed
+                    self.b_y += direction[1] * speed
+                    self.b_z += direction[2] * speed
 
-            
-        self.t += self.dt
+            elif self.b_mode == 3:
+                # Circular motion around fixed center point
+                if not hasattr(self, "circle_angle"):
+                    self.circle_angle = 0
+                    self.circle_center = np.array([5, 5])
+                    self.circle_radius = 3
+                    self.circle_speed = 0.08  # radians per step
 
-        
+                self.circle_angle += self.circle_speed
+                self.b_x = self.circle_center[0] + self.circle_radius * np.cos(self.circle_angle)
+                self.b_y = self.circle_center[1] + self.circle_radius * np.sin(self.circle_angle)
+                self.b_z = 5  # Fixed altitude, can also oscillate for realism
 
 
-        # keys = pygame.key.get_pressed()
-        # if keys[pygame.K_w]:  
-        #     self.b_y = min(10, self.b_y + 0.15)
-        # elif keys[pygame.K_s]:
-        #     self.b_y = max(0, self.b_y - 0.15)
-        
-        # if keys[pygame.K_d]:
-        #     self.b_x = min(10, self.b_x + 0.15)
-        # elif keys[pygame.K_a]:
-        #     self.b_x = max(0, self.b_x - 0.15)
-
-        # if keys[pygame.K_UP]:
-        #     self.b_z = min(10, self.b_z + 0.15)
-        # elif keys[pygame.K_DOWN]:
-        #     self.b_z = max(0, self.b_z - 0.15)
+        # Clip to bounds
+        self.b_x = np.clip(self.b_x, 0, 10)
+        self.b_y = np.clip(self.b_y, 0, 10)
+        self.b_z = np.clip(self.b_z, 0, 10)
 
     def game_over(self):
         rel_x = self.a_x - self.b_x
         rel_y = self.a_y - self.b_y
         rel_z = self.a_z - self.b_z
         distance = np.sqrt(rel_x**2 + rel_y**2 + rel_z**2)
-        return distance < 0.2
+
+        if self.game:
+            return distance < 0.2
+        else:
+            return distance == 0
         
 
     def rotation_matrix(self, roll, pitch, yaw):
@@ -338,9 +396,9 @@ class DoubleDroneGym(Env):
         return position, velocity, False
     
 
-# env = DoubleDroneGym()
+# env = DoubleDroneGym(game=True)
 # obs = env.reset()[0]
-# model = PPO.load('ppo660000.zip')
+# model = PPO.load('mid.zip')
 # while True:
 #     # Take a random action
 #     currStep = model.predict(observation=obs, deterministic=True)[0]

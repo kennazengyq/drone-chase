@@ -58,12 +58,12 @@ def wait_for_enter():
 
 
 def game():
-    env = DoubleDroneGym()
-    model = PPO.load('ppo660000.zip')
+    env = DoubleDroneGym(game=True)
+    model = PPO.load('again/ppo2800000.zip')
     obs = env.reset()[0]
 
     wait_for_enter()
-    
+
     start_time = time.time()
     running = True
 
@@ -75,18 +75,30 @@ def game():
         # Calculate score (time since start)
         elapsed_time = int(time.time() - start_time)
 
-        # Check for collision
-        
-
         # Pygame event loop
         screen.fill(WHITE)
         display_text(screen, f"Time: {elapsed_time} s", 50, 50)
 
         if env.game_over():  # Collision threshold
-            display_text(screen, "Game Over!", 50, 100)
+            display_text(screen, "Game Over! Press r to restart", 50, 100)
             pygame.display.flip()
-            time.sleep(2)  # Show game over message for 2 seconds
-            break  # Exit the loop
+            
+            waiting_for_restart = True
+            while waiting_for_restart:
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
+                        running = False
+                        waiting_for_restart = False
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_r:
+                            # Restart environment
+                            obs = env.reset()[0]
+                            start_time = time.time()
+                            waiting_for_restart = False
+                        elif event.key == pygame.K_ESCAPE:
+                            running = False
+                            waiting_for_restart = False
+            continue  # Skip rest of loop to restart or quit
 
         pygame.display.flip()
 

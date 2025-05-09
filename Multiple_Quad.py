@@ -15,7 +15,7 @@ class Multiple_Quad():
             event.canvas.figure.canvas.manager.toolbar.toggle()  
             return  # Prevent default behavior of saving
         
-    def __init__(self, a_x=0, a_y=0, a_z=0,b_x=0, b_y=0, b_z=0, roll=0, pitch=0, yaw=0, size=0.25, show_animation=True):
+    def __init__(self, a_x=0, a_y=0, a_z=0,b_x=0, b_y=0, b_z=0, roll=0, pitch=0, yaw=0, size=0.4, show_animation=True):
        
         # Quadrotors
         self.a_p1 = np.array([size / 2, 0, 0, 1]).T
