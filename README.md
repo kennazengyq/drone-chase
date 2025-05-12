@@ -55,8 +55,8 @@ The main issue is that the Chaser would often end up hovering near the Target in
 
 ## Current Plan
 Here are a few things I'm working on right now in hopes of improving the model:
-- Add penalty in reward function for "social distancing" behavior - maybe penalize hovering and increase bonus for collision threshold
-- Normalizing reward values - the files `NDoubleDroneGym.py` and `NDoubleDroneDRL.py` are copies of my original environment, except the reward and states are normalized. My loss and value loss were huge with the original environment, so hopefully this will provide some stability. 
-- Improving simulation of user actions - The evasive behavior mode tends to drive the target drone into edges and corners. I also don't want the RL agent to purely learn how to move in a sinusoidal shape.
-- I should probably learn how to better read and understand the logs and loss graphs
+- • Add penalty in reward function for "social distancing" behavior - maybe penalize hovering and increase bonus for collision threshold
+- • Normalizing reward values - the files `NDoubleDroneGym.py` and `NDoubleDroneDRL.py` are copies of my original environment, except the reward and states are normalized. My loss and value loss were huge with the original environment, so hopefully this will provide some stability. 
+- • Improving simulation of user actions - The evasive behavior mode tends to drive the target drone into edges and corners. I also don't want the RL agent to purely learn how to move in a sinusoidal shape.
+- • I should probably learn how to better read and understand the logs and loss graphs
 
