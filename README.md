@@ -3,9 +3,9 @@
 This project adapts the [Aerial Navigation Code](https://github.com/AtsushiSakai/PythonRobotics/tree/master/AerialNavigation/drone_3d_trajectory_following) by Daniel Ingram (daniel-s-ingram) from [PythonRobotics](atsushisakai.github.io/PythonRobotics/) to create a simple 3D envrionment with two quadrotors. One quadrotor (Target) is controlled by the player with keyboard controls, and the other (Chaser) is trained with [Stable Baselines3 (SB3)](https://stable-baselines3.readthedocs.io/en/master/modules/ppo.html)'s PPO algorithm. The goal is for the user to not get caught by the Chaser.  
 
 ## Modifications to PythonRobotics code
-The PythonRobotics code contains a Quadrotor.py file that plots the position of a quadrotor within Matplotlib based on its position (x,y,z), roll, pitch, and yaw. Within the drone_3d_trajectory_following.py uses PID to calculate the needed roll, pitch, yaw, and thrust for the quadrotor to follow a pre-determined trajectory.
+The PythonRobotics code contains a `Quadrotor.py` file that plots the position of a quadrotor within Matplotlib based on its position (x,y,z), roll, pitch, and yaw.`drone_3d_trajectory_following.py` uses PID to calculate the needed roll, pitch, yaw, and thrust for the quadrotor to follow a pre-determined trajectory.
 
-The Quadrotor.py file was modified to simulate two quadrotors, a and b, instead of one. To set up the Gym environment, the drone_3d_trajectory_following.py was adapted such that the yaw, pitch, roll, and thrust of drone a (chaser drone) was to be controlled by the RL agent, and the player could control the position (x, y, and z coordinates) of drone b (target drone) with keyboard controls.
+`Quadrotor.py` was modified to become `MultipleQuad.py` simulate two quadrotors, Chaser and Target, instead of one. To set up the Gym environment, `drone_3d_trajectory_following.py` was adapted such that the yaw, pitch, roll, and thrust of Drone A (Chaser) was to be controlled by the RL agent, and the player could control the position (x, y, and z coordinates) of Drone B (Target) with keyboard controls.
 
 ## Setting up the enviornment
 The simulation code from above was translated to a [Gymnasium](https://gymnasium.farama.org/) environment. 
@@ -21,17 +21,21 @@ The simulation code from above was translated to a [Gymnasium](https://gymnasium
 > Yaw, Pitch, Roll ∈ [-1, 1]
 
 **Reward Function:** 
-- Distance penalty of `-distance * 0.5`
-- Velocity penalty of `-0.1 * norm of velocity` to avoid high speeds
-- Close bonus of `10` if chaser is within 0.5 distance from target
-- Boundary penalty of `-5` if chaser hits edge of boundary
+- Proximity reward - Reward decreases exponentially as the distance increases
 - Approach reward - Dot product of relative position and velocity of chaser drone
+- Velocity penalty - Penalizes extremely high speeds (although I think I will try removing this)
+
 
 
 ## Training the Model
-During training, the target drone is set to move in a random but controlled sinusoidal motion. PPO was used as the RL envrionment, and 660k timesteps was enough for reasonable chasing behavior. 
+During training, the Target drone randomly selects one of the following movement patterns:
+1. Static
+2. Evasive - Move away from Chaser drone
+3. Circular motion
 
+I think the main roadblock I'm facing right now is how to properly simulate a user's playing behavior automatically during the training process. These three movement patterns are more predictable than a human player, and it don't seem to be training the model well enough.
 
+PPO was used as the RL algorithm, and honestly I lost track of how many timesteps I trained it for. 
 
 ## Gameplay
-
+Running the gym environmnet with the game flag set to TRUE allows the user to control the 
