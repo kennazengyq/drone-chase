@@ -35,7 +35,7 @@ This is constantly being tweaked, with specifics defined in the `calc_reward()` 
 During training, the Target drone randomly selects one of the following movement patterns:
 1. Static
 2. Evasive - Move away from Chaser drone
-3. Circular Motion
+3. Circular Motion - Radius and speed is randomized; Also contains noise
 
 StableBaselines3's PPO model was used as the RL algorithm. 
 
