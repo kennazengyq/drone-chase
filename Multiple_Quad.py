@@ -136,6 +136,7 @@ class Multiple_Quad():
         plt.xlim(0,10)
         plt.ylim(0,10)
         self.ax.set_zlim(0,10)
+
         plt.pause(0.001)
 
     

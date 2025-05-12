@@ -1,6 +1,6 @@
 import gymnasium as gym
 from stable_baselines3 import PPO, DQN, A2C
-from DoubleDroneGym import DoubleDroneGym
+from NDoubleDroneGym import NDoubleDroneGym
 from stable_baselines3.common.evaluation import evaluate_policy
 from stable_baselines3.common.env_checker import check_env
 from stable_baselines3.common.logger import configure
@@ -9,32 +9,32 @@ from stable_baselines3.common.logger import configure
 import os
 
 def train_sb3():
-    env = DoubleDroneGym(game=False)
+    env = NDoubleDroneGym(game=False)
     check_env(env, warn=True)
     logdir = 'logs'
-    model_dir = 'models2'
+    model_dir = 'NModels'
     os.makedirs(model_dir, exist_ok=True)
     os.makedirs(logdir, exist_ok=True)
-    modelPPO = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
-    modelPPO = PPO.load('models2/ppo700000.zip')
-    modelPPO.set_env(env)
+    # modelPPO = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
+    # modelPPO = PPO.load('models2/ppo700000.zip')
+    # modelPPO.set_env(env)
 
-    # modelPPO = PPO(
-    #     "MlpPolicy",
-    #     env,
-    #     verbose=1,
-    #     learning_rate=0.0003,  # Lower learning rate for stability
-    #     n_steps=1024,  # Larger batch size
-    #     gamma=0.99,  # Discount factor
-    #     gae_lambda=0.95,  # GAE parameter
-    #     clip_range=0.2,  # PPO clipping range
-    #     ent_coef=0.01,  # Encourage exploration
-    # )
+    modelPPO = PPO(
+        "MlpPolicy",
+        env,
+        verbose=1,
+        learning_rate=0.0003,  # Lower learning rate for stability
+        n_steps=1024,  # Larger batch size
+        gamma=0.95,  # Discount factor
+        gae_lambda=0.95,  # GAE parameter
+        clip_range=0.2,  # PPO clipping range
+        ent_coef=0.01,  # Encourage exploration
+    )
 
 
 
     TIMESTEPS = 50000
-    iter = 15
+    iter = 1
     while iter <= 200:
         tb_log_name=f'model_iter_{iter}'
         modelPPO.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, progress_bar=True, tb_log_name=tb_log_name)
@@ -42,9 +42,8 @@ def train_sb3():
         iter += 1
 
 def test_sb3():
-    env = DoubleDroneGym(game=True)
-    model = PPO.load('models2/ppo700000')
-    # model = PPO.load('models/ppo800000')
+    env = NDoubleDroneGym(game=True)
+    model = PPO.load('NModels/ppo150000')
     obs = env.reset()[0]
 
     while True:

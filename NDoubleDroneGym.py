@@ -15,9 +15,9 @@ import pygame
 
 pygame.init()
 
-class DoubleDroneGym(Env):
+class NDoubleDroneGym(Env):
     def __init__(self, game=False):
-        super(DoubleDroneGym,self).__init__()
+        super(NDoubleDroneGym,self).__init__()
         self.game = game
 
         self.logger = configure("./logs", ["stdout", "csv"])
@@ -74,19 +74,23 @@ class DoubleDroneGym(Env):
         distance = np.linalg.norm([rel_x, rel_y, rel_z])
 
         # Reward for reducing distance
-        distance_reward = -distance * 10 # Penalize distance
+        distance_reward = -distance  # Penalize distance
 
         # Strong reward for collision
         collision_reward = 0
-        if distance < 0.5:  # Collision threshold
+        if distance < 0.2:  # Collision threshold
             collision_reward = 1000  # Large reward for collision
+
         # Penalize hovering near the target without colliding
         hover_penalty = 0
-        if 0.3 < distance < 2:  # If hovering close but not colliding
-            hover_penalty = -10
+        if 0.2 <= distance < 1.0:  # If hovering close but not colliding
+            hover_penalty = -50
 
         # Total reward
         total_reward = distance_reward + collision_reward + hover_penalty
+
+        # Normalize reward
+        total_reward = total_reward / 1000.0  # Scale rewards to a smaller range
         return total_reward
 
     # def calc_reward(self):
@@ -190,14 +194,14 @@ class DoubleDroneGym(Env):
 
     def draw_elements_on_state(self):
         # Compute relative position
-        rel_x = self.a_x - self.b_x
-        rel_y = self.a_y - self.b_y
-        rel_z = self.a_z - self.b_z
+        rel_x = (self.a_x - self.b_x) / 10.0  # Normalize to range [-1, 1]
+        rel_y = (self.a_y - self.b_y) / 10.0
+        rel_z = (self.a_z - self.b_z) / 10.0
 
         self.state = np.array([
             rel_x, rel_y, rel_z,  # Relative position
-            self.x_vel, self.y_vel, self.z_vel,  # Velocity
-            self.roll, self.pitch, self.yaw, self.thrust  # Orientation and thrust
+            self.x_vel / 10.0, self.y_vel / 10.0, self.z_vel / 10.0,  # Normalize velocities
+            self.roll, self.pitch, self.yaw, self.thrust / (3 * self.m * self.g)  # Normalize thrust
         ], dtype=np.float32)
 
 
@@ -403,7 +407,7 @@ class DoubleDroneGym(Env):
         return position, velocity, False
     
 
-# env = DoubleDroneGym(game=False)
+# env = NDoubleDroneGym(game=False)
 # obs = env.reset()[0]
 # model = PPO.load('models/ppo800000.zip')
 # while True:

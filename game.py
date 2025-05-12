@@ -59,7 +59,7 @@ def wait_for_enter():
 
 def game():
     env = DoubleDroneGym(game=True)
-    model = PPO.load('again/ppo2800000.zip')
+    model = PPO.load('models2/ppo500000.zip')
     obs = env.reset()[0]
 
     wait_for_enter()
